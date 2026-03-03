@@ -1,80 +1,73 @@
-const form = document.getElementById('inventory-form');
-const tbody = document.getElementById('inventory-body');
-const alerts = document.getElementById('alerts');
-document.getElementById('date-display').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
 let inventory = JSON.parse(localStorage.getItem('my_inventory')) || [];
+const listContainer = document.getElementById('inventory-list');
+const alerts = document.getElementById('alerts');
 
-function updateUI() {
-    // Ordenar de A a Z
+function render() {
     inventory.sort((a, b) => a.name.localeCompare(b.name));
-
-    tbody.innerHTML = '';
+    listContainer.innerHTML = '';
     alerts.innerHTML = '';
-    
+
     inventory.forEach((item, index) => {
         const isLow = Number(item.quantity) <= Number(item.minStock);
-        const row = document.createElement('tr');
         
-        row.innerHTML = `
-            <td data-label="Producto"><strong>${item.name}</strong></td>
-            <td data-label="Stock">${item.quantity}</td>
-            <td data-label="Mínimo">${item.minStock}</td>
-            <td data-label="Estado">
-                <span class="badge ${isLow ? 'bg-low' : 'bg-ok'}">
-                    ${isLow ? 'REABASTECER' : 'OK'}
-                </span>
-            </td>
-            <td>
-                <button onclick="deleteItem(${index})" style="background:var(--danger); padding: 8px; width: 100%; font-size: 13px;">Eliminar</button>
-            </td>
-        `;
-        tbody.appendChild(row);
-
+        // Alertas
         if (isLow) {
-            alerts.innerHTML += `<div>⚠️ Stock bajo en: ${item.name}</div>`;
+            const div = document.createElement('div');
+            div.className = 'alert-item';
+            div.innerHTML = `⚠️ Stock bajo en: ${item.name}`;
+            alerts.appendChild(div);
         }
+
+        // Tarjeta de Producto
+        const card = document.createElement('div');
+        card.className = `product-card ${isLow ? 'low-stock' : ''}`;
+        card.innerHTML = `
+            <div class="info">
+                <h3>${item.name}</h3>
+                <p>Mínimo: ${item.minStock}</p>
+            </div>
+            <div class="qty-controls">
+                <button class="qty-btn" onclick="changeQty(${index}, -1)">-</button>
+                <span class="qty-num">${item.quantity}</span>
+                <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+                <button onclick="deleteItem(${index})" style="background:none; border:none; margin-left:10px; font-size:18px;">🗑️</button>
+            </div>
+        `;
+        listContainer.appendChild(card);
     });
     localStorage.setItem('my_inventory', JSON.stringify(inventory));
 }
 
-form.addEventListener('submit', (e) => {
+window.changeQty = (idx, val) => {
+    inventory[idx].quantity = Math.max(0, inventory[idx].quantity + val);
+    render();
+};
+
+window.deleteItem = (idx) => {
+    if(confirm('¿Eliminar producto?')) {
+        inventory.splice(idx, 1);
+        render();
+    }
+};
+
+document.getElementById('inventory-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const newItem = {
-        name: document.getElementById('name').value.trim(),
+    inventory.push({
+        name: document.getElementById('name').value,
         quantity: parseInt(document.getElementById('quantity').value),
         minStock: parseInt(document.getElementById('min-stock').value)
-    };
-    inventory.push(newItem);
-    updateUI();
-    form.reset();
-    document.getElementById('name').focus();
+    });
+    e.target.reset();
+    render();
 });
 
-function deleteItem(index) {
-    if(confirm("¿Deseas eliminar este producto?")) {
-        inventory.splice(index, 1);
-        updateUI();
-    }
-}
-
-// EXPORTAR EXCEL PROFESIONAL
+// Excel Pro
 document.getElementById('download-excel').addEventListener('click', () => {
-    if (inventory.length === 0) return alert("No hay datos");
-
-    const dataReport = inventory.map(item => ({
-        "DESCRIPCIÓN": item.name.toUpperCase(),
-        "STOCK ACTUAL": item.quantity,
-        "STOCK MÍNIMO": item.minStock,
-        "SITUACIÓN": Number(item.quantity) <= Number(item.minStock) ? "RECOMPRAR" : "ESTABLE",
-        "FECHA": new Date().toLocaleDateString()
-    }));
-
+    const ws = XLSX.utils.json_to_sheet(inventory);
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(dataReport);
-    ws['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
     XLSX.utils.book_append_sheet(wb, ws, "Inventario");
-    XLSX.writeFile(wb, `Inventario_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, "Reporte_Inventario.xlsx");
 });
 
-updateUI();
+document.getElementById('date-display').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+render();

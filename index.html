@@ -3,45 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Inventario Pro Móvil</title>
+    <title>Inventario Premium</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📦 Mi Inventario</h1>
+    <div class="app-container">
+        <header class="main-header">
+            <div class="logo">📦</div>
+            <h1>Mi Inventario</h1>
             <p id="date-display"></p>
         </header>
         
-        <div id="alerts"></div>
+        <div id="alerts" class="alerts-container"></div>
 
-        <section class="form-container">
+        <section class="card add-card">
             <form id="inventory-form">
-                <input type="text" id="name" placeholder="Producto" required>
-                <div class="row">
-                    <input type="number" id="quantity" placeholder="Stock" required>
-                    <input type="number" id="min-stock" placeholder="Mínimo" required>
+                <div class="input-group">
+                    <label>Nombre del Producto</label>
+                    <input type="text" id="name" placeholder="Ej: Monitor LED" required>
                 </div>
-                <button type="submit" class="btn-add">➕ Agregar Producto</button>
-                <button type="button" id="download-excel" class="btn-excel">📊 Exportar Excel Pro</button>
+                <div class="row">
+                    <div class="input-group">
+                        <label>Stock</label>
+                        <input type="number" id="quantity" placeholder="0" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Mínimo</label>
+                        <input type="number" id="min-stock" placeholder="0" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Añadir al Inventario</button>
             </form>
         </section>
 
-        <section class="inventory-list">
-            <table id="inventory-table">
-                <thead>
-                    <tr>
-                        <th>Producto</th>
-                        <th>Stock</th>
-                        <th>Mínimo</th>
-                        <th>Estado</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="inventory-body"></tbody>
-            </table>
-        </section>
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="🔍 Buscar productos...">
+        </div>
+
+        <div id="inventory-list" class="inventory-grid">
+            </div>
+
+        <button type="button" id="download-excel" class="fab">📊</button>
     </div>
     <script src="script.js"></script>
 </body>
