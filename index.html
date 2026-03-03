@@ -2,41 +2,41 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Inventario Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inventario Pro Móvil</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>📦 Control de Inventario</h1>
-            <p id="current-date"></p>
+            <h1>📦 Mi Inventario</h1>
+            <p id="date-display"></p>
         </header>
         
-        <section class="form-section">
+        <div id="alerts"></div>
+
+        <section class="form-container">
             <form id="inventory-form">
-                <input type="text" id="name" placeholder="Nombre del Producto" required>
-                <input type="number" id="quantity" placeholder="Stock Actual" required>
-                <input type="number" id="min-stock" placeholder="Stock Mínimo" required>
-                <div class="actions">
-                    <button type="submit" class="btn-add">➕ Agregar</button>
-                    <button type="button" id="download-excel" class="btn-download">📊 Exportar Excel Pro</button>
+                <input type="text" id="name" placeholder="Producto" required>
+                <div class="row">
+                    <input type="number" id="quantity" placeholder="Stock" required>
+                    <input type="number" id="min-stock" placeholder="Mínimo" required>
                 </div>
+                <button type="submit" class="btn-add">➕ Agregar Producto</button>
+                <button type="button" id="download-excel" class="btn-excel">📊 Exportar Excel Pro</button>
             </form>
         </section>
 
-        <div id="alerts"></div>
-
-        <section class="table-section">
-            <table>
+        <section class="inventory-list">
+            <table id="inventory-table">
                 <thead>
                     <tr>
-                        <th>Producto (A-Z)</th>
-                        <th>Stock Actual</th>
+                        <th>Producto</th>
+                        <th>Stock</th>
                         <th>Mínimo</th>
                         <th>Estado</th>
-                        <th>Acciones</th>
+                        <th>Acción</th>
                     </tr>
                 </thead>
                 <tbody id="inventory-body"></tbody>

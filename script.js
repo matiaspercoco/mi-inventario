@@ -1,12 +1,12 @@
 const form = document.getElementById('inventory-form');
 const tbody = document.getElementById('inventory-body');
 const alerts = document.getElementById('alerts');
-document.getElementById('current-date').innerText = new Date().toLocaleDateString();
+document.getElementById('date-display').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
 let inventory = JSON.parse(localStorage.getItem('my_inventory')) || [];
 
 function updateUI() {
-    // 1. ORDENAR ALFABÉTICAMENTE POR NOMBRE
+    // Ordenar de A a Z
     inventory.sort((a, b) => a.name.localeCompare(b.name));
 
     tbody.innerHTML = '';
@@ -17,30 +17,27 @@ function updateUI() {
         const row = document.createElement('tr');
         
         row.innerHTML = `
-            <td><strong>${item.name}</strong></td>
-            <td>${item.quantity} uds.</td>
-            <td>${item.minStock} uds.</td>
-            <td>
-                <span class="status-badge ${isLow ? 'bg-danger' : 'bg-success'}">
-                    ${isLow ? 'REABASTECER' : 'STOCK OK'}
+            <td data-label="Producto"><strong>${item.name}</strong></td>
+            <td data-label="Stock">${item.quantity}</td>
+            <td data-label="Mínimo">${item.minStock}</td>
+            <td data-label="Estado">
+                <span class="badge ${isLow ? 'bg-low' : 'bg-ok'}">
+                    ${isLow ? 'REABASTECER' : 'OK'}
                 </span>
             </td>
             <td>
-                <button onclick="deleteItem(${index})" style="background:var(--danger); padding: 5px 10px; font-size: 12px;">Eliminar</button>
+                <button onclick="deleteItem(${index})" style="background:var(--danger); padding: 8px; width: 100%; font-size: 13px;">Eliminar</button>
             </td>
         `;
         tbody.appendChild(row);
 
         if (isLow) {
-            const alertDiv = document.createElement('div');
-            alertDiv.innerHTML = `⚠️ Alerta de Stock: ${item.name} (Quedan solo ${item.quantity})`;
-            alerts.appendChild(alertDiv);
+            alerts.innerHTML += `<div>⚠️ Stock bajo en: ${item.name}</div>`;
         }
     });
     localStorage.setItem('my_inventory', JSON.stringify(inventory));
 }
 
-// Evento para agregar productos
 form.addEventListener('submit', (e) => {
     e.preventDefault();
     const newItem = {
@@ -48,52 +45,36 @@ form.addEventListener('submit', (e) => {
         quantity: parseInt(document.getElementById('quantity').value),
         minStock: parseInt(document.getElementById('min-stock').value)
     };
-    
     inventory.push(newItem);
     updateUI();
     form.reset();
+    document.getElementById('name').focus();
 });
 
-// Función para eliminar
 function deleteItem(index) {
-    if(confirm("¿Eliminar este producto del inventario?")) {
+    if(confirm("¿Deseas eliminar este producto?")) {
         inventory.splice(index, 1);
         updateUI();
     }
 }
 
-// EXPORTACIÓN EXCEL PROFESIONAL
+// EXPORTAR EXCEL PROFESIONAL
 document.getElementById('download-excel').addEventListener('click', () => {
-    if (inventory.length === 0) return alert("Agrega productos primero.");
+    if (inventory.length === 0) return alert("No hay datos");
 
-    // Mapeo de datos para que el Excel tenga títulos formales
     const dataReport = inventory.map(item => ({
-        "DESCRIPCIÓN PRODUCTO": item.name.toUpperCase(),
-        "CANTIDAD DISPONIBLE": item.quantity,
-        "NIVEL MÍNIMO": item.minStock,
-        "ESTADO": Number(item.quantity) <= Number(item.minStock) ? "BAJO STOCK" : "NORMAL",
-        "ULTIMA REVISIÓN": new Date().toLocaleDateString()
+        "DESCRIPCIÓN": item.name.toUpperCase(),
+        "STOCK ACTUAL": item.quantity,
+        "STOCK MÍNIMO": item.minStock,
+        "SITUACIÓN": Number(item.quantity) <= Number(item.minStock) ? "RECOMPRAR" : "ESTABLE",
+        "FECHA": new Date().toLocaleDateString()
     }));
 
-    // Crear libro y hoja
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(dataReport);
-
-    // Configurar ancho de columnas (caracteres aproximados)
-    ws['!cols'] = [
-        { wch: 35 }, // Producto
-        { wch: 20 }, // Cantidad
-        { wch: 15 }, // Mínimo
-        { wch: 15 }, // Estado
-        { wch: 18 }  // Fecha
-    ];
-
-    XLSX.utils.book_append_sheet(wb, ws, "Inventario Actual");
-    
-    // Descargar archivo con fecha en el nombre
-    const fileName = `Reporte_Inventario_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    ws['!cols'] = [{ wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
+    XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+    XLSX.writeFile(wb, `Inventario_${new Date().toISOString().split('T')[0]}.xlsx`);
 });
 
-// Carga inicial
 updateUI();

@@ -1,32 +1,116 @@
 :root {
     --primary: #2c3e50;
+    --accent: #3498db;
     --success: #27ae60;
     --danger: #e74c3c;
-    --warning: #f39c12;
-    --light: #f8f9fa;
+    --bg: #f0f2f5;
 }
 
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #e9ecef; margin: 0; padding: 20px; }
-.container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-header { text-align: center; border-bottom: 2px solid var(--light); margin-bottom: 20px; }
-h1 { color: var(--primary); margin-bottom: 5px; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-form { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; background: var(--light); padding: 20px; border-radius: 10px; }
-.actions { grid-column: span 3; display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg);
+    margin: 0;
+    padding: 15px;
+    color: #333;
+}
 
-input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; color: white; }
+.container { max-width: 900px; margin: auto; }
 
-.btn-add { background-color: var(--success); }
-.btn-download { background-color: var(--primary); }
-button:hover { opacity: 0.9; transform: translateY(-1px); }
+header { text-align: center; margin-bottom: 20px; }
+header h1 { margin: 0; color: var(--primary); font-size: 1.8rem; }
+#date-display { font-size: 0.9rem; color: #666; margin-top: 5px; }
 
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th { background: var(--primary); color: white; padding: 15px; text-align: left; }
-td { padding: 15px; border-bottom: 1px solid #eee; }
+/* Formulario */
+.form-container { 
+    background: white; 
+    padding: 20px; 
+    border-radius: 15px; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+}
 
-.status-badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-.bg-danger { background: #ffd7d4; color: var(--danger); }
-.bg-success { background: #d4edda; color: var(--success); }
+form { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 10px; }
+.row input { flex: 1; }
 
-#alerts div { padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid var(--danger); background: #fff5f5; color: var(--danger); font-weight: 600; }
+input { 
+    padding: 15px; 
+    border: 1px solid #ddd; 
+    border-radius: 10px; 
+    font-size: 16px; /* Evita zoom molesto en iOS */
+    outline: none;
+}
+
+button { 
+    padding: 15px; 
+    border: none; 
+    border-radius: 10px; 
+    font-size: 16px; 
+    font-weight: bold; 
+    cursor: pointer; 
+    color: white;
+    transition: 0.2s;
+}
+
+.btn-add { background: var(--success); }
+.btn-excel { background: var(--primary); }
+button:active { transform: scale(0.98); opacity: 0.9; }
+
+/* Alertas */
+#alerts div {
+    background: #ffdce0;
+    color: var(--danger);
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border-left: 5px solid var(--danger);
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* --- TABLA RESPONSIVA (Móvil) --- */
+@media screen and (max-width: 600px) {
+    table, thead, tbody, th, td, tr { display: block; }
+    thead tr { display: none; } /* Ocultamos cabeceras en móvil */
+    
+    tr {
+        background: white;
+        margin-bottom: 15px;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    td {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: var(--primary);
+    }
+
+    td:last-child { border: none; padding-top: 15px; }
+}
+
+/* Estilos de tabla en PC */
+@media screen and (min-width: 601px) {
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
+    th { background: var(--primary); color: white; padding: 15px; text-align: left; }
+    td { padding: 15px; border-bottom: 1px solid #eee; }
+}
+
+.badge {
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+.bg-ok { background: #d4edda; color: var(--success); }
+.bg-low { background: #f8d7da; color: var(--danger); }
