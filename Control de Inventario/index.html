@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inventario Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📦 Control de Inventario</h1>
+            <p id="current-date"></p>
+        </header>
+        
+        <section class="form-section">
+            <form id="inventory-form">
+                <input type="text" id="name" placeholder="Nombre del Producto" required>
+                <input type="number" id="quantity" placeholder="Stock Actual" required>
+                <input type="number" id="min-stock" placeholder="Stock Mínimo" required>
+                <div class="actions">
+                    <button type="submit" class="btn-add">➕ Agregar</button>
+                    <button type="button" id="download-excel" class="btn-download">📊 Exportar Excel Pro</button>
+                </div>
+            </form>
+        </section>
+
+        <div id="alerts"></div>
+
+        <section class="table-section">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto (A-Z)</th>
+                        <th>Stock Actual</th>
+                        <th>Mínimo</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-body"></tbody>
+            </table>
+        </section>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
