@@ -1,71 +1,63 @@
 :root {
     --primary: #4361ee;
-    --success: #4cc9f0;
-    --danger: #f72585;
+    --success: #2ec4b6;
+    --danger: #e71d36;
     --bg: #f8f9fa;
-    --text: #2b2d42;
+    --dark: #011627;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; color: var(--dark); }
 
-.app-container { max-width: 500px; margin: auto; padding: 20px; }
+.app-container { max-width: 500px; margin: auto; padding: 15px; }
 
-/* Header */
-.main-header { text-align: center; margin-bottom: 25px; }
-.logo { font-size: 40px; margin-bottom: 5px; }
-.main-header h1 { margin: 0; font-size: 22px; font-weight: 800; }
-#date-display { color: #8d99ae; font-size: 13px; text-transform: capitalize; }
+.main-header { text-align: center; margin-bottom: 20px; }
+.logo { font-size: 35px; }
+.main-header h1 { margin: 5px 0; font-size: 24px; font-weight: 800; color: var(--dark); }
+#date-display { color: #8d99ae; font-size: 14px; margin: 0; }
 
-/* Cards */
-.card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); margin-bottom: 20px; }
+.card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); margin-bottom: 20px; }
 
 .input-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
-.input-group label { font-size: 12px; font-weight: 700; color: #8d99ae; padding-left: 5px; }
+.input-group label { font-size: 12px; font-weight: 700; color: #6c757d; padding-left: 5px; }
 
-.row { display: flex; gap: 15px; margin-top: 10px; }
+.row { display: flex; gap: 10px; margin-top: 10px; }
 
 input { 
-    background: #f1f3f5; border: none; padding: 12px 15px; border-radius: 12px; 
-    font-size: 16px; width: 100%; outline: none; transition: 0.3s;
+    background: #f1f3f5; border: 2px solid transparent; padding: 12px; border-radius: 12px; 
+    font-size: 16px; width: 100%; outline: none; transition: 0.2s;
 }
-input:focus { background: #e9ecef; box-shadow: 0 0 0 2px var(--primary); }
+input:focus { border-color: var(--primary); background: white; }
 
-.btn { 
-    width: 100%; border: none; padding: 15px; border-radius: 15px; 
-    font-weight: 700; cursor: pointer; margin-top: 15px; transition: 0.3s;
-}
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:active { transform: scale(0.96); }
+.search-bar { margin-bottom: 15px; }
+#search-input { background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+
+.btn { width: 100%; border: none; padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer; margin-top: 15px; }
+.btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3); }
 
 /* Alertas */
-.alert-item { 
-    background: #ffe5ec; color: var(--danger); padding: 12px; 
-    border-radius: 12px; margin-bottom: 10px; font-size: 13px; 
-    font-weight: 600; border-left: 4px solid var(--danger);
-}
+.alert-item { background: #fee2e2; color: var(--danger); padding: 12px; border-radius: 12px; margin-bottom: 10px; font-size: 13px; font-weight: 600; border-left: 5px solid var(--danger); }
 
-/* Tarjetas de Producto */
+/* Productos */
 .product-card { 
-    background: white; padding: 15px; border-radius: 18px; 
+    background: white; padding: 18px; border-radius: 20px; 
     display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    margin-bottom: 12px; border: 1px solid #f1f3f5;
 }
-.product-card.low-stock { border-left: 5px solid var(--danger); }
+.low-stock { border-left: 6px solid var(--danger); background: #fffafb; }
 
-.info h3 { margin: 0; font-size: 16px; }
-.info p { margin: 0; font-size: 12px; color: #8d99ae; }
+.info h3 { margin: 0; font-size: 17px; color: var(--dark); }
+.info p { margin: 0; font-size: 12px; color: #8d99ae; font-weight: 600; }
 
-.qty-controls { display: flex; align-items: center; gap: 12px; }
-.qty-btn { 
-    background: #f1f3f5; border: none; width: 30px; height: 30px; 
-    border-radius: 10px; font-weight: bold; cursor: pointer;
-}
-.qty-num { font-weight: 800; min-width: 25px; text-align: center; }
+.qty-controls { display: flex; align-items: center; gap: 10px; }
+.qty-btn { background: #f1f3f5; border: none; width: 35px; height: 35px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 18px; }
+.qty-num { font-weight: 800; min-width: 25px; text-align: center; font-size: 18px; }
 
-/* Floating Action Button (Excel) */
+.btn-del { background: none; border: none; font-size: 18px; padding-left: 10px; cursor: pointer; }
+
+/* FAB Excel */
 .fab { 
-    position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; 
-    background: var(--text); border-radius: 20px; border: none; color: white;
-    font-size: 24px; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    position: fixed; bottom: 25px; right: 25px; width: 65px; height: 65px; 
+    background: var(--dark); border-radius: 22px; border: none; color: white;
+    font-size: 28px; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 }

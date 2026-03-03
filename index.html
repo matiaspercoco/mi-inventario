@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Inventario Premium</title>
+    <title>Inventario Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,7 +11,7 @@
     <div class="app-container">
         <header class="main-header">
             <div class="logo">📦</div>
-            <h1>Mi Inventario</h1>
+            <h1>Gestión de Stock</h1>
             <p id="date-display"></p>
         </header>
         
@@ -20,8 +20,8 @@
         <section class="card add-card">
             <form id="inventory-form">
                 <div class="input-group">
-                    <label>Nombre del Producto</label>
-                    <input type="text" id="name" placeholder="Ej: Monitor LED" required>
+                    <label>Producto</label>
+                    <input type="text" id="name" placeholder="Ej: Coca Cola 1.5L" required>
                 </div>
                 <div class="row">
                     <div class="input-group">
@@ -33,7 +33,7 @@
                         <input type="number" id="min-stock" placeholder="0" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Añadir al Inventario</button>
+                <button type="submit" class="btn btn-primary">Añadir Producto</button>
             </form>
         </section>
 
@@ -41,10 +41,9 @@
             <input type="text" id="search-input" placeholder="🔍 Buscar productos...">
         </div>
 
-        <div id="inventory-list" class="inventory-grid">
-            </div>
+        <div id="inventory-list" class="inventory-grid"></div>
 
-        <button type="button" id="download-excel" class="fab">📊</button>
+        <button type="button" id="download-excel" class="fab" title="Exportar Excel">📊</button>
     </div>
     <script src="script.js"></script>
 </body>
