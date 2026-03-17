@@ -3,16 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Inventario Pro</title>
+    <title>Inventario Pro - Sincronizado</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
+
+    <div id="auth-section" class="app-container">
+        <header class="main-header">
+            <div class="logo">🔐</div>
+            <h1>Acceso al Sistema</h1>
+            <p>Ingresa tus credenciales para gestionar el stock</p>
+        </header>
+
+        <section class="card">
+            <div class="input-group">
+                <label>Correo Electrónico</label>
+                <input type="email" id="email-auth" placeholder="ejemplo@correo.com">
+            </div>
+            <div class="input-group" style="margin-top: 15px;">
+                <label>Contraseña</label>
+                <input type="password" id="pass-auth" placeholder="••••••••">
+            </div>
+            <button onclick="handleAuth()" class="btn btn-primary">Entrar / Registrarse</button>
+        </section>
+    </div>
+
+    <div id="main-app" class="app-container" style="display: none;">
         <header class="main-header">
             <div class="logo">📦</div>
             <h1>Gestión de Stock</h1>
             <p id="date-display"></p>
+            <button onclick="logout()" style="background:none; border:none; color:var(--danger); font-weight:bold; cursor:pointer; margin-top:10px;">Cerrar Sesión</button>
         </header>
         
         <div id="alerts" class="alerts-container"></div>
@@ -21,31 +46,31 @@
             <form id="inventory-form">
                 <div class="input-group">
                     <label>Producto</label>
-                    <input type="text" id="name" placeholder="Ej: Monitor LED" required>
+                    <input type="text" id="name" placeholder="Nombre del artículo" required>
                 </div>
                 <div class="row">
                     <div class="input-group">
-                        <label>Stock</label>
+                        <label>Stock Actual</label>
                         <input type="number" id="quantity" placeholder="0" required>
                     </div>
                     <div class="input-group">
-                        <label>Mínimo</label>
+                        <label>Stock Mínimo</label>
                         <input type="number" id="min-stock" placeholder="0" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Añadir Producto</button>
+                <button type="submit" class="btn btn-primary">Añadir al Inventario</button>
             </form>
         </section>
 
         <div class="search-bar">
-            <input type="text" id="search-input" placeholder="🔍 Buscar productos...">
+            <input type="text" id="search-input" placeholder="🔍 Buscar en mis productos...">
         </div>
 
         <div id="inventory-list" class="inventory-grid"></div>
 
-        <button type="button" id="download-excel" class="fab" title="Exportar Excel">📊</button>
+        <button type="button" id="download-excel" class="fab" title="Exportar Reporte Profesional">📊</button>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script src="script.js"></script>
 </body>
 </html>
