@@ -121,16 +121,38 @@ searchInput.addEventListener('input', (e) => render(e.target.value));
 // EXPORTACIÓN EXCEL
 document.getElementById('download-excel').addEventListener('click', () => {
     if (inventory.length === 0) return alert("No hay datos para exportar");
+
+    // 1. Definimos los encabezados y mapeamos los datos
+    // Usamos mayúsculas para un toque más formal y técnico
     const excelData = inventory.map(item => ({
-        "PRODUCTO": item.nombre.toUpperCase(),
-        "CANTIDAD": item.cantidad,
-        "MIN_STOCK": item.min_stock,
-        "ESTADO": Number(item.cantidad) <= Number(item.min_stock) ? "RECOMPRAR" : "OK"
+        "PRODUCTO / DESCRIPCIÓN": item.nombre.toUpperCase(),
+        "STOCK ACTUAL": item.cantidad,
+        "MÍNIMO REQUERIDO": item.min_stock,
+        "ESTADO": Number(item.cantidad) <= Number(item.min_stock) ? "⚠️ RECOMPRAR" : "✅ EN STOCK",
+        "FECHA DE REVISIÓN": new Date().toLocaleDateString('es-ES')
     }));
+
+    // 2. Creamos la hoja de cálculo
     const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // 3. CONFIGURACIÓN DE DISEÑO PROFESIONAL
+    // Definimos anchos de columna fijos para que no se corten los nombres
+    const colWidths = [
+        { wch: 40 }, // Producto
+        { wch: 15 }, // Stock
+        { wch: 20 }, // Mínimo
+        { wch: 18 }, // Estado
+        { wch: 18 }  // Fecha
+    ];
+    ws['!cols'] = colWidths;
+
+    // 4. Creamos el libro y descargamos
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Inventario");
-    XLSX.writeFile(wb, `Inventario_Sincronizado.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Reporte Inventario");
+
+    // Generamos el nombre del archivo con la fecha actual para mejor organización
+    const hoy = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Reporte_Inventario_Sync_${hoy}.xlsx`);
 });
 
 document.getElementById('date-display').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
