@@ -1,23 +1,45 @@
-let inventory = JSON.parse(localStorage.getItem('my_inventory')) || [];
+// CONFIGURACIÓN SUPABASE
+const SUPABASE_URL = 'https://wnhcsrwioprqtpdzioda.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_GtiYBNjdAxyy5YV7BJY_0A_wXZCHFQ1';
+
+// Inicializamos el cliente con un nombre distinto para evitar conflictos
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let inventory = [];
 const listContainer = document.getElementById('inventory-list');
 const alerts = document.getElementById('alerts');
 const searchInput = document.getElementById('search-input');
 
+// 1. CARGAR DATOS DESDE LA NUBE
+async function loadData() {
+    const { data, error } = await supabaseClient
+        .from('productos')
+        .select('*')
+        .order('nombre', { ascending: true });
+
+    if (error) {
+        console.error('Error cargando datos:', error);
+        alert("Error al conectar con la base de datos");
+    } else {
+        inventory = data;
+        render();
+    }
+}
+
+// 2. RENDERIZAR LA INTERFAZ
 function render(filter = "") {
-    inventory.sort((a, b) => a.name.localeCompare(b.name));
     listContainer.innerHTML = '';
     alerts.innerHTML = '';
 
-    const filtered = inventory.filter(i => i.name.toLowerCase().includes(filter.toLowerCase()));
+    const filtered = inventory.filter(i => i.nombre.toLowerCase().includes(filter.toLowerCase()));
 
-    filtered.forEach((item, index) => {
-        const actualIdx = inventory.indexOf(item);
-        const isLow = Number(item.quantity) <= Number(item.minStock);
+    filtered.forEach((item) => {
+        const isLow = Number(item.cantidad) <= Number(item.min_stock);
         
         if (isLow) {
             const div = document.createElement('div');
             div.className = 'alert-item';
-            div.innerHTML = `🚨 Stock crítico: ${item.name} (${item.quantity} unidades)`;
+            div.innerHTML = `🚨 Stock crítico: ${item.nombre} (${item.cantidad} unidades)`;
             alerts.appendChild(div);
         }
 
@@ -25,79 +47,93 @@ function render(filter = "") {
         card.className = `product-card ${isLow ? 'low-stock' : ''}`;
         card.innerHTML = `
             <div class="info">
-                <h3>${item.name}</h3>
-                <p>MÍNIMO REQUERIDO: ${item.minStock}</p>
+                <h3>${item.nombre}</h3>
+                <p>MÍNIMO REQUERIDO: ${item.min_stock}</p>
             </div>
             <div class="qty-controls">
-                <button class="qty-btn" onclick="changeQty(${actualIdx}, -1)">-</button>
-                <span class="qty-num">${item.quantity}</span>
-                <button class="qty-btn" onclick="changeQty(${actualIdx}, 1)">+</button>
-                <button class="btn-del" onclick="deleteItem(${actualIdx})">🗑️</button>
+                <button class="qty-btn" onclick="changeQty('${item.id}', -1)">-</button>
+                <span class="qty-num">${item.cantidad}</span>
+                <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
+                <button class="btn-del" onclick="deleteItem('${item.id}')">🗑️</button>
             </div>
         `;
         listContainer.appendChild(card);
     });
-    localStorage.setItem('my_inventory', JSON.stringify(inventory));
 }
 
-window.changeQty = (idx, val) => {
-    inventory[idx].quantity = Math.max(0, inventory[idx].quantity + val);
-    render(searchInput.value);
-};
+// 3. ACTUALIZAR CANTIDAD EN LA NUBE
+window.changeQty = async (id, val) => {
+    const item = inventory.find(i => i.id === id);
+    const newQty = Math.max(0, item.cantidad + val);
 
-window.deleteItem = (idx) => {
-    if(confirm('¿Eliminar producto?')) {
-        inventory.splice(idx, 1);
+    const { error } = await supabaseClient
+        .from('productos')
+        .update({ cantidad: newQty })
+        .eq('id', id);
+
+    if (!error) {
+        item.cantidad = newQty;
         render(searchInput.value);
     }
 };
 
-searchInput.addEventListener('input', (e) => render(e.target.value));
+// 4. ELIMINAR DE LA NUBE
+window.deleteItem = async (id) => {
+    if(confirm('¿Eliminar producto definitivamente?')) {
+        const { error } = await supabaseClient
+            .from('productos')
+            .delete()
+            .eq('id', id);
 
-document.getElementById('inventory-form').addEventListener('submit', (e) => {
+        if (!error) {
+            inventory = inventory.filter(i => i.id !== id);
+            render(searchInput.value);
+        }
+    }
+};
+
+// 5. AÑADIR NUEVO PRODUCTO
+document.getElementById('inventory-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    inventory.push({
-        name: document.getElementById('name').value,
-        quantity: parseInt(document.getElementById('quantity').value),
-        minStock: parseInt(document.getElementById('min-stock').value)
-    });
-    e.target.reset();
-    render();
+    const newProduct = {
+        nombre: document.getElementById('name').value,
+        cantidad: parseInt(document.getElementById('quantity').value),
+        min_stock: parseInt(document.getElementById('min-stock').value)
+    };
+
+    const { data, error } = await supabaseClient
+        .from('productos')
+        .insert([newProduct])
+        .select();
+
+    if (!error) {
+        inventory.push(data[0]);
+        inventory.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        e.target.reset();
+        render();
+    } else {
+        console.error("Error al insertar:", error);
+    }
 });
 
-// EXPORTACIÓN EXCEL FORMATEADA
+searchInput.addEventListener('input', (e) => render(e.target.value));
+
+// EXPORTACIÓN EXCEL
 document.getElementById('download-excel').addEventListener('click', () => {
     if (inventory.length === 0) return alert("No hay datos para exportar");
-
-    // 1. Preparamos los datos con nombres bonitos
     const excelData = inventory.map(item => ({
-        "DESCRIPCIÓN DEL PRODUCTO": item.name.toUpperCase(),
-        "CANTIDAD ACTUAL": item.quantity,
-        "STOCK MÍNIMO": item.minStock,
-        "ESTADO": Number(item.quantity) <= Number(item.minStock) ? "🚨 RECOMPRAR" : "✅ OK",
-        "FECHA DE REPORTE": new Date().toLocaleDateString()
+        "PRODUCTO": item.nombre.toUpperCase(),
+        "CANTIDAD": item.cantidad,
+        "MIN_STOCK": item.min_stock,
+        "ESTADO": Number(item.cantidad) <= Number(item.min_stock) ? "RECOMPRAR" : "OK"
     }));
-
-    // 2. Creamos la hoja de cálculo
     const ws = XLSX.utils.json_to_sheet(excelData);
-
-    // 3. Estilizamos las columnas (ancho)
-    const colWidths = [
-        { wch: 35 }, // Producto
-        { wch: 18 }, // Cantidad
-        { wch: 18 }, // Mínimo
-        { wch: 20 }, // Estado
-        { wch: 15 }  // Fecha
-    ];
-    ws['!cols'] = colWidths;
-
-    // 4. Creamos el libro y descargamos
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Inventario");
-    
-    const fecha = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(wb, `Reporte_Inventario_${fecha}.xlsx`);
+    XLSX.writeFile(wb, `Inventario_Sincronizado.xlsx`);
 });
 
 document.getElementById('date-display').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-render();
+
+// Arrancar la carga de datos
+loadData();
