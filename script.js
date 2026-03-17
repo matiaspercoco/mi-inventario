@@ -1,3 +1,4 @@
+// 1. CONFIGURACIÓN DE CONEXIÓN
 const SUPABASE_URL = 'https://wnhcsrwioprqtpdzioda.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_GtiYBNjdAxyy5YV7BJY_0A_wXZCHFQ1';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -7,14 +8,20 @@ const listContainer = document.getElementById('inventory-list');
 const alerts = document.getElementById('alerts');
 const searchInput = document.getElementById('search-input');
 
-// --- SISTEMA DE AUTENTICACIÓN ---
+// 2. CONTROL DE ACCESO (LOGIN/LOGOUT)
 async function checkUser() {
     const { data: { user } } = await supabaseClient.auth.getUser();
+    
     if (user) {
+        // Usuario autenticado: Mostrar app, ocultar login
         document.getElementById('auth-section').style.display = 'none';
         document.getElementById('main-app').style.display = 'block';
-        loadData();
+        document.getElementById('date-display').innerText = new Date().toLocaleDateString('es-ES', { 
+            weekday: 'long', day: 'numeric', month: 'long' 
+        });
+        loadData(); 
     } else {
+        // Usuario no autenticado: Mostrar login, ocultar app
         document.getElementById('auth-section').style.display = 'block';
         document.getElementById('main-app').style.display = 'none';
     }
@@ -24,13 +31,22 @@ window.handleAuth = async () => {
     const email = document.getElementById('email-auth').value;
     const password = document.getElementById('pass-auth').value;
     
+    if(!email || !password) return alert("Por favor completa los campos");
+
+    // Intentar inicio de sesión
     let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    
     if (error) {
-        ({ data, error } = await supabaseClient.auth.signUp({ email, password }));
-        if (error) alert("Error: " + error.message);
-        else alert("Usuario creado. ¡Ya puedes entrar!");
+        // Si no existe, intentar registrarlo
+        let { data: sData, error: sError } = await supabaseClient.auth.signUp({ email, password });
+        if (sError) {
+            alert("Error: " + sError.message);
+        } else {
+            alert("Cuenta creada. Si activaste confirmación por mail, revisa tu bandeja.");
+        }
+    } else {
+        checkUser(); // Login exitoso
     }
-    checkUser();
 };
 
 window.logout = async () => {
@@ -38,22 +54,28 @@ window.logout = async () => {
     checkUser();
 };
 
-// --- GESTIÓN DE INVENTARIO ---
+// 3. GESTIÓN DE DATOS (CRUD)
 async function loadData() {
     const { data, error } = await supabaseClient
         .from('productos')
         .select('*')
         .order('nombre', { ascending: true });
-    if (!error) { inventory = data; render(); }
+
+    if (!error) {
+        inventory = data;
+        render();
+    }
 }
 
 function render(filter = "") {
     listContainer.innerHTML = '';
     alerts.innerHTML = '';
+
     const filtered = inventory.filter(i => i.nombre.toLowerCase().includes(filter.toLowerCase()));
 
     filtered.forEach((item) => {
         const isLow = Number(item.cantidad) <= Number(item.min_stock);
+        
         if (isLow) {
             const div = document.createElement('div');
             div.className = 'alert-item';
@@ -82,14 +104,29 @@ function render(filter = "") {
 window.changeQty = async (id, val) => {
     const item = inventory.find(i => i.id === id);
     const newQty = Math.max(0, item.cantidad + val);
-    const { error } = await supabaseClient.from('productos').update({ cantidad: newQty }).eq('id', id);
-    if (!error) { item.cantidad = newQty; render(searchInput.value); }
+
+    const { error } = await supabaseClient
+        .from('productos')
+        .update({ cantidad: newQty })
+        .eq('id', id);
+
+    if (!error) {
+        item.cantidad = newQty;
+        render(searchInput.value);
+    }
 };
 
 window.deleteItem = async (id) => {
-    if (confirm('¿Eliminar producto?')) {
-        const { error } = await supabaseClient.from('productos').delete().eq('id', id);
-        if (!error) { inventory = inventory.filter(i => i.id !== id); render(); }
+    if (confirm('¿Eliminar producto definitivamente?')) {
+        const { error } = await supabaseClient
+            .from('productos')
+            .delete()
+            .eq('id', id);
+
+        if (!error) {
+            inventory = inventory.filter(i => i.id !== id);
+            render();
+        }
     }
 };
 
@@ -100,23 +137,43 @@ document.getElementById('inventory-form').addEventListener('submit', async (e) =
         cantidad: parseInt(document.getElementById('quantity').value),
         min_stock: parseInt(document.getElementById('min-stock').value)
     };
-    const { data, error } = await supabaseClient.from('productos').insert([newItem]).select();
-    if (!error) { inventory.push(data[0]); e.target.reset(); render(); }
+
+    const { data, error } = await supabaseClient
+        .from('productos')
+        .insert([newItem])
+        .select();
+
+    if (!error) {
+        inventory.push(data[0]);
+        inventory.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        e.target.reset();
+        render();
+    }
 });
 
-// --- EXCEL PROFESIONAL ---
+// 4. EXPORTACIÓN EXCEL PROFESIONAL
 document.getElementById('download-excel').addEventListener('click', () => {
+    if (inventory.length === 0) return alert("No hay datos");
+    
     const excelData = inventory.map(item => ({
         "PRODUCTO": item.nombre.toUpperCase(),
         "CANTIDAD": item.cantidad,
-        "MIN_STOCK": item.min_stock,
-        "ESTADO": item.cantidad <= item.min_stock ? "⚠️ RECOMPRAR" : "✅ OK"
+        "MÍNIMO": item.min_stock,
+        "ESTADO": item.cantidad <= item.min_stock ? "RECOMPRAR" : "OK"
     }));
+
     const ws = XLSX.utils.json_to_sheet(excelData);
-    ws['!cols'] = [{ wch: 30 }, { wch: 12 }, { wch: 12 }, { wch: 15 }];
+    ws['!cols'] = [{ wch: 35 }, { wch: 10 }, { wch: 10 }, { wch: 15 }];
+    
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Inventario");
     XLSX.writeFile(wb, `Inventario_Sincronizado.xlsx`);
 });
 
-checkUser();
+// 5. INICIALIZACIÓN AL CARGAR
+window.onload = () => {
+    checkUser();
+};
+
+// Escucha de búsqueda
+searchInput.addEventListener('input', (e) => render(e.target.value));
