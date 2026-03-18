@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Inventario Pro - Sincronizado</title>
+    <title>Inventario Pro - Mi Inventario</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="auth-section" class="app-container">
+    <div id="auth-section" class="app-container" style="display: none;">
         <header class="main-header">
             <div class="logo">🔐</div>
-            <h1>Acceso al Sistema</h1>
-            <p>Ingresa tus credenciales para gestionar el stock</p>
+            <h1>Mi Inventario</h1>
+            <p>Acceso Privado y Seguro</p>
         </header>
 
         <section class="card">
@@ -28,7 +29,7 @@
                 <label>Contraseña</label>
                 <input type="password" id="pass-auth" placeholder="••••••••">
             </div>
-            <button onclick="handleAuth()" class="btn btn-primary">Entrar / Registrarse</button>
+            <button onclick="handleAuth()" class="btn btn-primary" style="margin-top: 20px;">Entrar / Registrarse</button>
         </section>
     </div>
 
@@ -37,7 +38,7 @@
             <div class="logo">📦</div>
             <h1>Gestión de Stock</h1>
             <p id="date-display"></p>
-            <button onclick="logout()" style="background:none; border:none; color:var(--danger); font-weight:bold; cursor:pointer; margin-top:10px;">Cerrar Sesión</button>
+            <button onclick="logout()" class="btn-logout">Cerrar Sesión</button>
         </header>
         
         <div id="alerts" class="alerts-container"></div>
@@ -45,30 +46,39 @@
         <section class="card add-card">
             <form id="inventory-form">
                 <div class="input-group">
-                    <label>Producto</label>
-                    <input type="text" id="name" placeholder="Nombre del artículo" required>
+                    <label>Nombre del Producto</label>
+                    <input type="text" id="name" placeholder="Ej: Cable de Red Cat6" required>
                 </div>
                 <div class="row">
                     <div class="input-group">
-                        <label>Stock Actual</label>
-                        <input type="number" id="quantity" placeholder="0" required>
+                        <label>Cantidad</label>
+                        <input type="number" id="quantity" value="0" required>
                     </div>
                     <div class="input-group">
                         <label>Stock Mínimo</label>
-                        <input type="number" id="min-stock" placeholder="0" required>
+                        <input type="number" id="min-stock" value="5" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Añadir al Inventario</button>
+                <button type="submit" class="btn btn-primary">Añadir Producto</button>
             </form>
         </section>
 
         <div class="search-bar">
-            <input type="text" id="search-input" placeholder="🔍 Buscar en mis productos...">
+            <input type="text" id="search-input" placeholder="🔍 Buscar en mi inventario...">
         </div>
 
         <div id="inventory-list" class="inventory-grid"></div>
 
-        <button type="button" id="download-excel" class="fab" title="Exportar Reporte Profesional">📊</button>
+        <button type="button" id="download-excel" class="fab" title="Exportar a Excel">📊</button>
+    </div>
+
+    <div id="qr-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center; flex-direction:column;">
+        <div style="background:white; padding:30px; border-radius:20px; text-align:center; max-width: 90%;">
+            <h2 id="qr-product-name" style="margin-bottom:20px; color:#333; font-family: sans-serif;"></h2>
+            <div id="qrcode-container" style="display: inline-block; padding: 10px; border: 1px solid #eee;"></div>
+            <p style="color: #666; font-size: 0.9rem; margin-top: 15px;">Escanea este código para identificar el producto</p>
+            <button onclick="document.getElementById('qr-modal').style.display='none'" class="btn btn-primary" style="margin-top:20px; width: 100%;">Cerrar</button>
+        </div>
     </div>
 
     <script src="script.js"></script>
