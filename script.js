@@ -88,16 +88,26 @@ window.handleAuth = async () => {
     const email = document.getElementById('email-auth').value;
     const password = document.getElementById('pass-auth').value;
     
-    // Intentar entrar primero
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    // 1. Intentamos LOGUEAR primero
+    const { data, error: loginError } = await supabaseClient.auth.signInWithPassword({ email, password });
     
-    if (error) {
-        // Si falla el login, intentar registrar
+    if (loginError) {
+        // 2. Si el error es que la clave está mal, avisamos (no registramos encima)
+        if (loginError.message === "Invalid login credentials") {
+            alert("La contraseña es incorrecta para este correo.");
+            return;
+        }
+
+        // 3. Si el correo no existe, intentamos REGISTRAR
         const { error: signUpError } = await supabaseClient.auth.signUp({ email, password });
-        if (signUpError) alert("Error: " + signUpError.message);
-        else alert("Cuenta creada. Revisa tu correo de confirmación.");
+        if (signUpError) {
+            alert("Error: " + signUpError.message);
+        } else {
+            alert("¡Cuenta creada! Revisa tu email para confirmar.");
+        }
+    } else {
+        checkUser(); // Entró directo
     }
-    checkUser();
 };
 
 window.logout = async () => {
