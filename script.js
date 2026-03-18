@@ -1,86 +1,67 @@
-// 1. CONFIGURACIÓN DE CONEXIÓN
+// 1. CONFIGURACIÓN
 const SUPABASE_URL = 'https://wnhcsrwioprqtpdzioda.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_GtiYBNjdAxyy5YV7BJY_0A_wXZCHFQ1';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let inventory = [];
-const listContainer = document.getElementById('inventory-list');
-const alerts = document.getElementById('alerts');
-const searchInput = document.getElementById('search-input');
 
-// 2. CONTROL DE ACCESO (LOGIN/LOGOUT)
+// 2. CONTROL DE SESIÓN
 async function checkUser() {
     const { data: { user } } = await supabaseClient.auth.getUser();
-    
+    const authSection = document.getElementById('auth-section');
+    const mainApp = document.getElementById('main-app');
+
     if (user) {
-        // Usuario autenticado: Mostrar app, ocultar login
-        document.getElementById('auth-section').style.display = 'none';
-        document.getElementById('main-app').style.display = 'block';
-        document.getElementById('date-display').innerText = new Date().toLocaleDateString('es-ES', { 
-            weekday: 'long', day: 'numeric', month: 'long' 
-        });
-        loadData(); 
+        authSection.style.display = 'none';
+        mainApp.style.display = 'block';
+        loadData();
     } else {
-        // Usuario no autenticado: Mostrar login, ocultar app
-        document.getElementById('auth-section').style.display = 'block';
-        document.getElementById('main-app').style.display = 'none';
+        authSection.style.display = 'block';
+        mainApp.style.display = 'none';
     }
 }
 
-window.handleAuth = async () => {
-    const email = document.getElementById('email-auth').value;
-    const password = document.getElementById('pass-auth').value;
+// 3. GENERADOR DE QR
+window.showQR = (id, nombre) => {
+    const container = document.getElementById('qrcode-container');
+    container.innerHTML = ""; // Limpiar el anterior
     
-    if(!email || !password) return alert("Por favor completa los campos");
-
-    // Intentar inicio de sesión
-    let { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    new QRCode(container, {
+        text: id, // El QR contiene el ID único del producto
+        width: 180,
+        height: 180,
+        colorDark : "#2c3e50",
+        colorLight : "#ffffff"
+    });
     
-    if (error) {
-        // Si no existe, intentar registrarlo
-        let { data: sData, error: sError } = await supabaseClient.auth.signUp({ email, password });
-        if (sError) {
-            alert("Error: " + sError.message);
-        } else {
-            alert("Cuenta creada. Si activaste confirmación por mail, revisa tu bandeja.");
-        }
-    } else {
-        checkUser(); // Login exitoso
-    }
+    document.getElementById('qr-product-name').innerText = nombre.toUpperCase();
+    document.getElementById('qr-modal').style.display = 'flex';
 };
 
-window.logout = async () => {
-    await supabaseClient.auth.signOut();
-    checkUser();
-};
-
-// 3. GESTIÓN DE DATOS (CRUD)
+// 4. LÓGICA DE INVENTARIO
 async function loadData() {
     const { data, error } = await supabaseClient
         .from('productos')
         .select('*')
         .order('nombre', { ascending: true });
-
-    if (!error) {
-        inventory = data;
-        render();
-    }
+    if (!error) { inventory = data; render(); }
 }
 
 function render(filter = "") {
-    listContainer.innerHTML = '';
+    const list = document.getElementById('inventory-list');
+    const alerts = document.getElementById('alerts');
+    list.innerHTML = '';
     alerts.innerHTML = '';
 
     const filtered = inventory.filter(i => i.nombre.toLowerCase().includes(filter.toLowerCase()));
 
-    filtered.forEach((item) => {
-        const isLow = Number(item.cantidad) <= Number(item.min_stock);
-        
+    filtered.forEach(item => {
+        const isLow = item.cantidad <= item.min_stock;
         if (isLow) {
-            const div = document.createElement('div');
-            div.className = 'alert-item';
-            div.innerHTML = `🚨 Stock crítico: ${item.nombre}`;
-            alerts.appendChild(div);
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert-item';
+            alertDiv.innerHTML = `⚠️ Stock bajo: ${item.nombre}`;
+            alerts.appendChild(alertDiv);
         }
 
         const card = document.createElement('div');
@@ -88,45 +69,55 @@ function render(filter = "") {
         card.innerHTML = `
             <div class="info">
                 <h3>${item.nombre}</h3>
-                <p>MÍNIMO: ${item.min_stock}</p>
+                <small>ID: ${item.id.substring(0,8)}</small>
+                <button onclick="showQR('${item.id}', '${item.nombre}')" class="btn-qr">📱 Generar QR</button>
             </div>
             <div class="qty-controls">
-                <button class="qty-btn" onclick="changeQty('${item.id}', -1)">-</button>
-                <span class="qty-num">${item.cantidad}</span>
-                <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
+                <button onclick="changeQty('${item.id}', -1)">-</button>
+                <span>${item.cantidad}</span>
+                <button onclick="changeQty('${item.id}', 1)">+</button>
                 <button class="btn-del" onclick="deleteItem('${item.id}')">🗑️</button>
             </div>
         `;
-        listContainer.appendChild(card);
+        list.appendChild(card);
     });
 }
+
+// 5. ACCIONES
+window.handleAuth = async () => {
+    const email = document.getElementById('email-auth').value;
+    const password = document.getElementById('pass-auth').value;
+    
+    // Intentar entrar primero
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    
+    if (error) {
+        // Si falla el login, intentar registrar
+        const { error: signUpError } = await supabaseClient.auth.signUp({ email, password });
+        if (signUpError) alert("Error: " + signUpError.message);
+        else alert("Cuenta creada. Revisa tu correo de confirmación.");
+    }
+    checkUser();
+};
+
+window.logout = async () => {
+    await supabaseClient.auth.signOut();
+    checkUser();
+};
 
 window.changeQty = async (id, val) => {
     const item = inventory.find(i => i.id === id);
     const newQty = Math.max(0, item.cantidad + val);
-
-    const { error } = await supabaseClient
-        .from('productos')
-        .update({ cantidad: newQty })
-        .eq('id', id);
-
-    if (!error) {
-        item.cantidad = newQty;
-        render(searchInput.value);
-    }
+    await supabaseClient.from('productos').update({ cantidad: newQty }).eq('id', id);
+    item.cantidad = newQty;
+    render();
 };
 
 window.deleteItem = async (id) => {
-    if (confirm('¿Eliminar producto definitivamente?')) {
-        const { error } = await supabaseClient
-            .from('productos')
-            .delete()
-            .eq('id', id);
-
-        if (!error) {
-            inventory = inventory.filter(i => i.id !== id);
-            render();
-        }
+    if (confirm('¿Eliminar producto?')) {
+        await supabaseClient.from('productos').delete().eq('id', id);
+        inventory = inventory.filter(i => i.id !== id);
+        render();
     }
 };
 
@@ -137,43 +128,10 @@ document.getElementById('inventory-form').addEventListener('submit', async (e) =
         cantidad: parseInt(document.getElementById('quantity').value),
         min_stock: parseInt(document.getElementById('min-stock').value)
     };
-
-    const { data, error } = await supabaseClient
-        .from('productos')
-        .insert([newItem])
-        .select();
-
-    if (!error) {
-        inventory.push(data[0]);
-        inventory.sort((a, b) => a.nombre.localeCompare(b.nombre));
-        e.target.reset();
-        render();
-    }
+    const { data, error } = await supabaseClient.from('productos').insert([newItem]).select();
+    if (!error) { inventory.push(data[0]); e.target.reset(); render(); }
 });
 
-// 4. EXPORTACIÓN EXCEL PROFESIONAL
-document.getElementById('download-excel').addEventListener('click', () => {
-    if (inventory.length === 0) return alert("No hay datos");
-    
-    const excelData = inventory.map(item => ({
-        "PRODUCTO": item.nombre.toUpperCase(),
-        "CANTIDAD": item.cantidad,
-        "MÍNIMO": item.min_stock,
-        "ESTADO": item.cantidad <= item.min_stock ? "RECOMPRAR" : "OK"
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    ws['!cols'] = [{ wch: 35 }, { wch: 10 }, { wch: 10 }, { wch: 15 }];
-    
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Inventario");
-    XLSX.writeFile(wb, `Inventario_Sincronizado.xlsx`);
-});
-
-// 5. INICIALIZACIÓN AL CARGAR
-window.onload = () => {
-    checkUser();
-};
-
-// Escucha de búsqueda
-searchInput.addEventListener('input', (e) => render(e.target.value));
+// Inicializar
+window.onload = checkUser;
+document.getElementById('search-input')?.addEventListener('input', (e) => render(e.target.value));
