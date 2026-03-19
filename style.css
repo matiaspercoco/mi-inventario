@@ -1,63 +1,17 @@
-:root {
-    --primary: #4361ee;
-    --success: #2ec4b6;
-    --danger: #e71d36;
-    --bg: #f8f9fa;
-    --dark: #011627;
-}
-
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; color: var(--dark); }
-
-.app-container { max-width: 500px; margin: auto; padding: 15px; }
-
-.main-header { text-align: center; margin-bottom: 20px; }
-.logo { font-size: 35px; }
-.main-header h1 { margin: 5px 0; font-size: 24px; font-weight: 800; color: var(--dark); }
-#date-display { color: #8d99ae; font-size: 14px; margin: 0; }
-
-.card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); margin-bottom: 20px; }
-
-.input-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
-.input-group label { font-size: 12px; font-weight: 700; color: #6c757d; padding-left: 5px; }
-
-.row { display: flex; gap: 10px; margin-top: 10px; }
-
-input { 
-    background: #f1f3f5; border: 2px solid transparent; padding: 12px; border-radius: 12px; 
-    font-size: 16px; width: 100%; outline: none; transition: 0.2s;
-}
-input:focus { border-color: var(--primary); background: white; }
-
-.search-bar { margin-bottom: 15px; }
-#search-input { background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
-
-.btn { width: 100%; border: none; padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer; margin-top: 15px; }
-.btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3); }
-
-/* Alertas */
-.alert-item { background: #fee2e2; color: var(--danger); padding: 12px; border-radius: 12px; margin-bottom: 10px; font-size: 13px; font-weight: 600; border-left: 5px solid var(--danger); }
-
-/* Productos */
-.product-card { 
-    background: white; padding: 18px; border-radius: 20px; 
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 12px; border: 1px solid #f1f3f5;
-}
-.low-stock { border-left: 6px solid var(--danger); background: #fffafb; }
-
-.info h3 { margin: 0; font-size: 17px; color: var(--dark); }
-.info p { margin: 0; font-size: 12px; color: #8d99ae; font-weight: 600; }
-
-.qty-controls { display: flex; align-items: center; gap: 10px; }
-.qty-btn { background: #f1f3f5; border: none; width: 35px; height: 35px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 18px; }
-.qty-num { font-weight: 800; min-width: 25px; text-align: center; font-size: 18px; }
-
-.btn-del { background: none; border: none; font-size: 18px; padding-left: 10px; cursor: pointer; }
-
-/* FAB Excel */
-.fab { 
-    position: fixed; bottom: 25px; right: 25px; width: 65px; height: 65px; 
-    background: var(--dark); border-radius: 22px; border: none; color: white;
-    font-size: 28px; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
+:root { --primary: #3498db; --danger: #e74c3c; }
+body { font-family: sans-serif; background: #f4f7f6; margin: 0; }
+.app-container { padding: 20px; max-width: 450px; margin: auto; }
+.card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+.modal-input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+.btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-logout { background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; float: right; }
+.row { display: flex; gap: 10px; }
+.product-card { background: white; padding: 15px; border-radius: 12px; border-left: 6px solid #2ecc71; margin-bottom: 15px; }
+.product-card.low-stock { border-left-color: var(--danger); }
+.qty-controls { display: flex; gap: 10px; margin-top: 10px; }
+.qty-controls button { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
+.modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 380px; position: relative; text-align: center; }
+.btn-close { position: absolute; top: 10px; right: 10px; font-size: 24px; border: none; background: none; cursor: pointer; }
+#reader { width: 100%; border-radius: 12px; overflow: hidden; }

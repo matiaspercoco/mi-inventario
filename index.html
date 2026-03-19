@@ -2,82 +2,68 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Inventario Pro - Mi Inventario</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario Pro - IGM</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="auth-section" class="app-container" style="display: none;">
-        <header class="main-header">
-            <div class="logo">🔐</div>
-            <h1>Mi Inventario</h1>
-            <p>Acceso Privado y Seguro</p>
-        </header>
-
+    <div id="auth-section" class="app-container">
+        <header class="main-header"><h1>🔐 Acceso IT</h1></header>
         <section class="card">
-            <div class="input-group">
-                <label>Correo Electrónico</label>
-                <input type="email" id="email-auth" placeholder="ejemplo@correo.com">
-            </div>
-            <div class="input-group" style="margin-top: 15px;">
-                <label>Contraseña</label>
-                <input type="password" id="pass-auth" placeholder="••••••••">
-            </div>
-            <button onclick="handleAuth()" class="btn btn-primary" style="margin-top: 20px;">Entrar / Registrarse</button>
+            <input type="email" id="email-auth" placeholder="Email" class="modal-input">
+            <input type="password" id="pass-auth" placeholder="Contraseña" class="modal-input">
+            <button onclick="handleAuth()" class="btn btn-primary">Ingresar</button>
         </section>
     </div>
 
-    <div id="main-app" class="app-container" style="display: none;">
+    <div id="main-app" class="app-container" style="display:none;">
         <header class="main-header">
-            <div class="logo">📦</div>
-            <h1>Gestión de Stock</h1>
-            <p id="date-display"></p>
-            <button onclick="logout()" class="btn-logout">Cerrar Sesión</button>
+            <h1>📦 Stock IGM</h1>
+            <button onclick="logout()" class="btn-logout">Salir</button>
         </header>
-        
-        <div id="alerts" class="alerts-container"></div>
 
-        <section class="card add-card">
+        <div id="scanner-container" style="display:none;">
+            <div id="reader"></div>
+            <button onclick="stopScanner()" class="btn-logout" style="width:100%; margin-top:10px;">Cerrar Cámara</button>
+        </div>
+        <button id="start-scan-btn" onclick="startScanner()" class="btn" style="background:#2ecc71; margin-bottom:15px;">📷 ESCANEAR QR</button>
+
+        <section class="card">
             <form id="inventory-form">
-                <div class="input-group">
-                    <label>Nombre del Producto</label>
-                    <input type="text" id="name" placeholder="Ej: Cable de Red Cat6" required>
-                </div>
+                <input type="text" id="name" placeholder="Nombre del producto" required class="modal-input">
                 <div class="row">
-                    <div class="input-group">
-                        <label>Cantidad</label>
-                        <input type="number" id="quantity" value="0" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Stock Mínimo</label>
-                        <input type="number" id="min-stock" value="5" required>
-                    </div>
+                    <input type="number" id="quantity" placeholder="Cant." required class="modal-input">
+                    <input type="number" id="min-stock" placeholder="Mín." required class="modal-input">
                 </div>
-                <button type="submit" class="btn btn-primary">Añadir Producto</button>
+                <button type="submit" class="btn btn-primary">Registrar Producto</button>
             </form>
         </section>
 
-        <div class="search-bar">
-            <input type="text" id="search-input" placeholder="🔍 Buscar en mi inventario...">
-        </div>
-
+        <input type="text" id="search-input" placeholder="🔍 Buscar..." class="modal-input">
         <div id="inventory-list" class="inventory-grid"></div>
-
-        <button type="button" id="download-excel" class="fab" title="Exportar a Excel">📊</button>
     </div>
 
-    <div id="qr-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center; flex-direction:column;">
-        <div style="background:white; padding:30px; border-radius:20px; text-align:center; max-width: 90%;">
-            <h2 id="qr-product-name" style="margin-bottom:20px; color:#333; font-family: sans-serif;"></h2>
-            <div id="qrcode-container" style="display: inline-block; padding: 10px; border: 1px solid #eee;"></div>
-            <p style="color: #666; font-size: 0.9rem; margin-top: 15px;">Escanea este código para identificar el producto</p>
-            <button onclick="document.getElementById('qr-modal').style.display='none'" class="btn btn-primary" style="margin-top:20px; width: 100%;">Cerrar</button>
+    <div id="qr-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="qr-product-name"></h2>
+            <div id="qr-form-section">
+                <input type="text" id="tech-brand" placeholder="Marca" class="modal-input">
+                <input type="text" id="tech-model" placeholder="Modelo" class="modal-input">
+                <input type="date" id="tech-date" class="modal-input">
+                <input type="text" id="tech-purchase" placeholder="Nro Factura / Compra" class="modal-input">
+                <button onclick="generateFinalQR()" class="btn btn-primary">Generar QR</button>
+            </div>
+            <div id="qr-result-section" style="display:none;">
+                <div id="qrcode-container" style="background:white; padding:10px; display:inline-block;"></div>
+                <div id="tech-info-display" style="text-align:left; margin-top:15px; font-size:14px; border-top:1px solid #eee; padding-top:10px;"></div>
+                <button onclick="printQR()" class="btn" style="background:#34495e; color:white; margin-top:10px;">🖨️ Imprimir Etiqueta</button>
+                <button onclick="resetModal()" class="btn" style="margin-top:10px">Editar Datos</button>
+            </div>
+            <button onclick="closeQRModal()" class="btn-close">×</button>
         </div>
     </div>
 
