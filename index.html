@@ -3,34 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario Pro - IGM</title>
+    <title>Mi Stock</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div id="auth-section" class="app-container">
-        <header class="main-header"><h1>🔐 Acceso IT</h1></header>
+        <header class="main-header"><h1>🔐 Acceso</h1></header>
         <section class="card">
-            <input type="email" id="email-auth" placeholder="Email" class="modal-input">
+            <input type="email" id="email-auth" placeholder="Correo" class="modal-input">
             <input type="password" id="pass-auth" placeholder="Contraseña" class="modal-input">
-            <button onclick="handleAuth()" class="btn btn-primary">Ingresar</button>
+            <button onclick="handleAuth()" class="btn btn-primary">Entrar</button>
         </section>
     </div>
 
     <div id="main-app" class="app-container" style="display:none;">
         <header class="main-header">
-            <h1>📦 Stock IGM</h1>
-            <button onclick="logout()" class="btn-logout">Salir</button>
+            <h1>📦 Mi Stock</h1>
+            <button onclick="logout()" class="btn-logout">Cerrar Sesión</button>
         </header>
 
         <div id="scanner-container" style="display:none;">
             <div id="reader"></div>
             <button onclick="stopScanner()" class="btn-logout" style="width:100%; margin-top:10px;">Cerrar Cámara</button>
         </div>
-        <button id="start-scan-btn" onclick="startScanner()" class="btn" style="background:#2ecc71; margin-bottom:15px;">📷 ESCANEAR QR</button>
+        <button id="start-scan-btn" onclick="startScanner()" class="btn" style="background:#2ecc71; margin-bottom:15px; color:white;">📷 ESCANEAR QR</button>
 
         <section class="card">
             <form id="inventory-form">
@@ -43,7 +42,7 @@
             </form>
         </section>
 
-        <input type="text" id="search-input" placeholder="🔍 Buscar..." class="modal-input">
+        <input type="text" id="search-input" placeholder="🔍 Buscar producto..." class="modal-input">
         <div id="inventory-list" class="inventory-grid"></div>
     </div>
 
@@ -54,19 +53,17 @@
                 <input type="text" id="tech-brand" placeholder="Marca" class="modal-input">
                 <input type="text" id="tech-model" placeholder="Modelo" class="modal-input">
                 <input type="date" id="tech-date" class="modal-input">
-                <input type="text" id="tech-purchase" placeholder="Nro Factura / Compra" class="modal-input">
+                <input type="text" id="tech-purchase" placeholder="Factura" class="modal-input">
                 <button onclick="generateFinalQR()" class="btn btn-primary">Generar QR</button>
             </div>
             <div id="qr-result-section" style="display:none;">
-                <div id="qrcode-container" style="background:white; padding:10px; display:inline-block;"></div>
-                <div id="tech-info-display" style="text-align:left; margin-top:15px; font-size:14px; border-top:1px solid #eee; padding-top:10px;"></div>
-                <button onclick="printQR()" class="btn" style="background:#34495e; color:white; margin-top:10px;">🖨️ Imprimir Etiqueta</button>
-                <button onclick="resetModal()" class="btn" style="margin-top:10px">Editar Datos</button>
+                <div id="qrcode-container"></div>
+                <div id="tech-info-display"></div>
+                <button onclick="printQR()" class="btn" style="background:#34495e; color:white; margin-top:10px;">🖨️ Imprimir</button>
             </div>
             <button onclick="closeQRModal()" class="btn-close">×</button>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
