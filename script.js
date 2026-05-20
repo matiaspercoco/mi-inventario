@@ -4,6 +4,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let inventory = [];
 let html5QrCode = null;
+let currentSelectedItemId = null; // Guarda el ID del producto activo para el QR
 
 async function checkUser() {
     const { data: { user } } = await supabaseClient.auth.getUser();
@@ -47,28 +48,23 @@ function render(filter = "") {
     });
 }
 
-// Escuchar el evento de envío del formulario para GUARDAR en Supabase
+// Escuchar el formulario de registro
 document.getElementById('inventory-form').addEventListener('submit', async (e) => {
-    e.preventDefault(); // Evita que la página se recargue solo
-    
+    e.preventDefault();
     const nombre = document.getElementById('name').value;
     const cantidad = parseInt(document.getElementById('quantity').value);
     const min_stock = parseInt(document.getElementById('min-stock').value);
 
-    // Enviar a la base de datos de Supabase
-    const { error } = await supabaseClient
-        .from('productos')
-        .insert([{ nombre, cantidad, min_stock }]);
+    const { error } = await supabaseClient.from('productos').insert([{ nombre, cantidad, min_stock }]);
 
     if (error) {
         alert("Error al guardar: " + error.message);
     } else {
-        document.getElementById('inventory-form').reset(); // Limpia los inputs
-        loadData(); // Recarga los datos actualizados de Supabase en la pantalla
+        document.getElementById('inventory-form').reset();
+        loadData();
     }
 });
 
-// Escuchar el buscador
 document.getElementById('search-input').addEventListener('input', (e) => render(e.target.value));
 
 window.handleAuth = async () => {
@@ -88,11 +84,104 @@ window.changeQty = async (id, val) => {
     item.cantidad = newQty; render(document.getElementById('search-input').value);
 };
 
+// Abre el modal y prepara el formulario de la ficha
 window.showQR = (id, nombre) => {
-    const item = inventory.find(i => i.id === id);
+    currentSelectedItemId = id;
     document.getElementById('qr-product-name').innerText = nombre;
+    
+    // Resetear vistas del modal
+    document.getElementById('qr-form-section').style.display = 'block';
+    document.getElementById('qr-result-section').style.display = 'none';
+    document.getElementById('qrcode-container').innerHTML = ''; 
+    document.getElementById('tech-info-display').innerHTML = '';
+    
+    // Autocompletar si ya existen datos en el array local
+    const item = inventory.find(i => i.id === id);
+    document.getElementById('tech-brand').value = item.marca || '';
+    document.getElementById('tech-model').value = item.modelo || '';
+    document.getElementById('tech-date').value = item.fecha_ingreso || '';
+    document.getElementById('tech-purchase').value = item.factura || '';
+
     document.getElementById('qr-modal').style.display = 'flex';
-    // ... resto de lógica de QR ...
+};
+
+// Genera el código QR real e inserta los datos complementarios en Supabase
+window.generateFinalQR = async () => {
+    const marca = document.getElementById('tech-brand').value;
+    const modelo = document.getElementById('tech-model').value;
+    const fecha = document.getElementById('tech-date').value;
+    const factura = document.getElementById('tech-purchase').value;
+
+    // Actualizar Supabase con los datos de la ficha técnica
+    const { error } = await supabaseClient.from('productos').update({
+        marca: marca,
+        modelo: modelo,
+        fecha_ingreso: fecha,
+        factura: factura
+    }).eq('id', currentSelectedItemId);
+
+    if (error) {
+        alert("Error al guardar la ficha: " + error.message);
+        return;
+    }
+
+    // Recargar datos locales en segundo plano
+    loadData();
+
+    // Limpiar contenedor por si había un QR viejo generado
+    const qrContainer = document.getElementById('qrcode-container');
+    qrContainer.innerHTML = '';
+
+    // El contenido del QR va a ser el ID único del producto para que el escáner lo busque
+    new QRCode(qrContainer, {
+        text: currentSelectedItemId,
+        width: 180,
+        height: 180,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // Mostrar información en la interfaz debajo del QR
+    document.getElementById('tech-info-display').innerHTML = `
+        <p style="margin: 8px 0 4px 0;"><b>Marca:</b> ${marca || '-'}</p>
+        <p style="margin: 4px 0 4px 0;"><b>Modelo:</b> ${modelo || '-'}</p>
+        <p style="margin: 4px 0 4px 0;"><b>Fecha:</b> ${fecha || '-'}</p>
+        <p style="margin: 4px 0 8px 0;"><b>Factura:</b> ${factura || '-'}</p>
+    `;
+
+    // Cambiar de vista en el modal
+    document.getElementById('qr-form-section').style.display = 'none';
+    document.getElementById('qr-result-section').style.display = 'block';
+};
+
+window.printQR = () => {
+    const nombre = document.getElementById('qr-product-name').innerText;
+    const qrHtml = document.getElementById('qrcode-container').innerHTML;
+    const infoHtml = document.getElementById('tech-info-display').innerHTML;
+    
+    const ventanaImpresion = window.open('', '_blank');
+    ventanaImpresion.document.write(`
+        <html>
+        <head>
+            <title>Imprimir QR - ${nombre}</title>
+            <style>
+                body { font-family: sans-serif; text-align: center; padding: 20px; }
+                .print-card { border: 2px dashed #000; padding: 20px; display: inline-block; border-radius: 10px; }
+                #qrcode-container img { margin: auto; }
+            </style>
+        </head>
+        <body>
+            <div class="print-card">
+                <h2>${nombre}</h2>
+                <div>${qrHtml}</div>
+                <div style="text-align: left; margin-top: 15px;">${infoHtml}</div>
+            </div>
+            <script>window.onload = function() { window.print(); window.close(); }</script>
+        </body>
+        </html>
+    `);
+    ventanaImpresion.document.close();
 };
 
 window.closeQRModal = () => document.getElementById('qr-modal').style.display = 'none';
