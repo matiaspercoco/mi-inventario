@@ -32,7 +32,10 @@ function render(filter = "") {
         const card = document.createElement('div');
         card.className = `product-card ${item.cantidad <= item.min_stock ? 'low-stock' : ''}`;
         card.innerHTML = `
-            <h3>${item.nombre}</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0;">${item.nombre}</h3>
+                <button onclick="deleteItem('${item.id}', '${item.nombre}')" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 5px;">🗑️</button>
+            </div>
             <p>Stock: <b>${item.cantidad}</b></p>
             <button onclick="showQR('${item.id}', '${item.nombre}')" class="btn-qr">📱 Ficha / QR</button>
             <div class="qty-controls">
@@ -43,6 +46,27 @@ function render(filter = "") {
         list.appendChild(card);
     });
 }
+
+// Escuchar el evento de envío del formulario para GUARDAR en Supabase
+document.getElementById('inventory-form').addEventListener('submit', async (e) => {
+    e.preventDefault(); // Evita que la página se recargue solo
+    
+    const nombre = document.getElementById('name').value;
+    const cantidad = parseInt(document.getElementById('quantity').value);
+    const min_stock = parseInt(document.getElementById('min-stock').value);
+
+    // Enviar a la base de datos de Supabase
+    const { error } = await supabaseClient
+        .from('productos')
+        .insert([{ nombre, cantidad, min_stock }]);
+
+    if (error) {
+        alert("Error al guardar: " + error.message);
+    } else {
+        document.getElementById('inventory-form').reset(); // Limpia los inputs
+        loadData(); // Recarga los datos actualizados de Supabase en la pantalla
+    }
+});
 
 // Escuchar el buscador
 document.getElementById('search-input').addEventListener('input', (e) => render(e.target.value));
@@ -72,4 +96,48 @@ window.showQR = (id, nombre) => {
 };
 
 window.closeQRModal = () => document.getElementById('qr-modal').style.display = 'none';
+
+window.deleteItem = async (id, nombre) => {
+    if (!confirm(`¿Eliminar ${nombre}?`)) return;
+    const { error } = await supabaseClient.from('productos').delete().eq('id', id);
+    if (error) alert("Error: " + error.message);
+    else {
+        inventory = inventory.filter(item => item.id !== id);
+        render(document.getElementById('search-input').value);
+    }
+};
+
+window.exportToExcel = () => {
+    if (inventory.length === 0) {
+        alert("No hay productos para exportar");
+        return;
+    }
+    
+    let excelContent = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">`;
+    excelContent += `<head><meta charset="UTF-8"></head><body><table border="1">`;
+    excelContent += `<tr style="background-color:#3498db; color:white; font-weight:bold;"><th>ID</th><th>Nombre</th><th>Cantidad</th><th>Mínimo Stock</th><th>Marca</th><th>Modelo</th></tr>`;
+    
+    inventory.forEach(item => {
+        excelContent += `<tr>
+            <td>${item.id || ''}</td>
+            <td>${item.nombre || ''}</td>
+            <td>${item.cantidad ?? 0}</td>
+            <td>${item.min_stock ?? 0}</td>
+            <td>${item.marca || ''}</td>
+            <td>${item.modelo || ''}</td>
+        </tr>`;
+    });
+    
+    excelContent += `</table></body></html>`;
+    
+    const blob = new Blob([excelContent], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "mi_inventario_stock.xls";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+};
+
 window.onload = checkUser;
