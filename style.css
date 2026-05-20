@@ -32,7 +32,6 @@ body { font-family: sans-serif; background: #f4f7f6; margin: 0; }
 .btn-close { position: absolute; top: 10px; right: 10px; font-size: 24px; border: none; background: none; cursor: pointer; }
 #reader { width: 100%; border-radius: 12px; overflow: hidden; }
 
-/* Estilos nuevos para centrar el QR */
 #qrcode-container { display: flex; justify-content: center; margin: 15px 0; }
 #qrcode-container img { border: 4px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 #tech-info-display { text-align: left; background: #f9f9f9; padding: 10px; border-radius: 8px; font-size: 0.95rem; line-height: 1.4; border: 1px solid #eee; }

@@ -4,7 +4,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let inventory = [];
 let html5QrCode = null;
-let currentSelectedItemId = null; // Guarda el ID del producto que se va a generar el QR
+let currentSelectedItemId = null;
 
 async function checkUser() {
     const { data: { user } } = await supabaseClient.auth.getUser();
@@ -48,7 +48,7 @@ function render(filter = "") {
     });
 }
 
-// Evento para procesar el formulario de Registro de Productos en Supabase
+// Registro de productos en Supabase
 document.getElementById('inventory-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const nombre = document.getElementById('name').value;
@@ -65,7 +65,7 @@ document.getElementById('inventory-form').addEventListener('submit', async (e) =
     }
 });
 
-// Escuchar el buscador
+// Buscador en tiempo real
 document.getElementById('search-input').addEventListener('input', (e) => render(e.target.value));
 
 window.handleAuth = async () => {
@@ -85,18 +85,16 @@ window.changeQty = async (id, val) => {
     item.cantidad = newQty; render(document.getElementById('search-input').value);
 };
 
-// Abre el modal y rellena los datos existentes de la ficha técnica
+// Abre modal cargando datos existentes desde Supabase
 window.showQR = (id, nombre) => {
     currentSelectedItemId = id;
     document.getElementById('qr-product-name').innerText = nombre;
     
-    // Resetear las secciones del modal
     document.getElementById('qr-form-section').style.display = 'block';
     document.getElementById('qr-result-section').style.display = 'none';
     document.getElementById('qrcode-container').innerHTML = '';
     document.getElementById('tech-info-display').innerHTML = '';
     
-    // Rellenar con datos almacenados de forma local si ya los tiene
     const item = inventory.find(i => i.id === id);
     document.getElementById('tech-brand').value = item.marca || '';
     document.getElementById('tech-model').value = item.modelo || '';
@@ -106,14 +104,13 @@ window.showQR = (id, nombre) => {
     document.getElementById('qr-modal').style.display = 'flex';
 };
 
-// Guarda la ficha en Supabase y renderiza el código QR usando la librería QRCode
+// Guarda los datos ingresados en Supabase y renderiza el QR
 window.generateFinalQR = async () => {
     const marca = document.getElementById('tech-brand').value;
     const modelo = document.getElementById('tech-model').value;
     const fecha = document.getElementById('tech-date').value;
     const factura = document.getElementById('tech-purchase').value;
 
-    // Actualiza la fila en Supabase
     const { error } = await supabaseClient.from('productos').update({
         marca: marca,
         modelo: modelo,
@@ -126,12 +123,11 @@ window.generateFinalQR = async () => {
         return;
     }
 
-    loadData(); // Refrescar base de datos interna
+    await loadData(); // Sincroniza el inventario local
 
     const qrContainer = document.getElementById('qrcode-container');
-    qrContainer.innerHTML = ''; // Limpiar contenedor
+    qrContainer.innerHTML = '';
 
-    // El contenido cifrado en el QR será el ID único para que lo procese la cámara
     new QRCode(qrContainer, {
         text: currentSelectedItemId,
         width: 180,
@@ -141,7 +137,6 @@ window.generateFinalQR = async () => {
         correctLevel: QRCode.CorrectLevel.H
     });
 
-    // Inyectar etiquetas informativas bajo el código
     document.getElementById('tech-info-display').innerHTML = `
         <p style="margin: 8px 0 4px 0;"><b>Marca:</b> ${marca || '-'}</p>
         <p style="margin: 4px 0 4px 0;"><b>Modelo:</b> ${modelo || '-'}</p>
@@ -149,12 +144,11 @@ window.generateFinalQR = async () => {
         <p style="margin: 4px 0 8px 0;"><b>Factura:</b> ${factura || '-'}</p>
     `;
 
-    // Alternar vistas dentro del modal
     document.getElementById('qr-form-section').style.display = 'none';
     document.getElementById('qr-result-section').style.display = 'block';
 };
 
-// Lógica de impresión directa de la etiqueta
+// Imprimir etiqueta QR
 window.printQR = () => {
     const nombre = document.getElementById('qr-product-name').innerText;
     const qrHtml = document.getElementById('qrcode-container').innerHTML;
@@ -186,7 +180,7 @@ window.printQR = () => {
 
 window.closeQRModal = () => document.getElementById('qr-modal').style.display = 'none';
 
-// Eliminar un producto
+// Eliminar un producto de Supabase
 window.deleteItem = async (id, nombre) => {
     if (!confirm(`¿Eliminar ${nombre}?`)) return;
     const { error } = await supabaseClient.from('productos').delete().eq('id', id);
@@ -197,7 +191,7 @@ window.deleteItem = async (id, nombre) => {
     }
 };
 
-// Exportación nativa a Excel
+// Exportar base de datos a archivo Excel (.xls)
 window.exportToExcel = () => {
     if (inventory.length === 0) {
         alert("No hay productos para exportar");
@@ -206,7 +200,7 @@ window.exportToExcel = () => {
     
     let excelContent = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">`;
     excelContent += `<head><meta charset="UTF-8"></head><body><table border="1">`;
-    excelContent += `<tr style="background-color:#3498db; color:white; font-weight:bold;"><th>ID</th><th>Nombre</th><th>Cantidad</th><th>Mínimo Stock</th><th>Marca</th><th>Modelo</th></tr>`;
+    excelContent += `<tr style="background-color:#3498db; color:white; font-weight:bold;"><th>ID</th><th>Nombre</th><th>Cantidad</th><th>Mínimo Stock</th><th>Marca</th><th>Modelo</th><th>Fecha Ingreso</th><th>Factura</th></tr>`;
     
     inventory.forEach(item => {
         excelContent += `<tr>
@@ -216,6 +210,8 @@ window.exportToExcel = () => {
             <td>${item.min_stock ?? 0}</td>
             <td>${item.marca || ''}</td>
             <td>${item.modelo || ''}</td>
+            <td>${item.fecha_ingreso || ''}</td>
+            <td>${item.factura || ''}</td>
         </tr>`;
     });
     
